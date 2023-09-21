@@ -5,11 +5,17 @@
  ***                                                         
  *** Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr> 
  *** Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ***                                                         
+ ***   
+ *** Class for discrete distribution                                                      
  **************************************************************/
 
 #include "StdAfxRHmm.h"
 
+/*
+ * Constructor for discrete distribution
+ * @param theNClass Number of classes
+ * @param theNProba Number of probabilities
+ */
 cDiscrete::cDiscrete(uint theNClass, uint theNProba) 
 {
         MESS_CREAT("cDiscrete")
@@ -25,6 +31,9 @@ cDiscrete::cDiscrete(uint theNClass, uint theNProba)
     }
 }
 
+/*
+ * Deconstructor for discrete distribution
+ */
 cDiscrete::~cDiscrete()
 {
         MESS_DESTR("cDiscrete")
@@ -42,9 +51,9 @@ void cDiscrete::Print()
 {
 	for (uint h = 0; h<mProbaMatVector.size();h++ )
 	{	Rprintf("Position %d\n",h);
-		for (register uint i = 0 ; i < mvNClass ; i++)
+		for (uint i = 0 ; i < mvNClass ; i++)
 		{	Rprintf("State %d :\t", i) ;
-			for (register uint j = 0 ; j < GetNProba() ; j++)
+			for (uint j = 0 ; j < GetNProba() ; j++)
 				Rprintf("P[%d]=%lf\t", j, mProbaMatVector[h][i][j]) ;
 			Rprintf("\n") ;
 		}
@@ -53,9 +62,7 @@ void cDiscrete::Print()
 
 void cDiscrete::ComputeCondProba(cDVector* theY, uint theNSample, cDMatrix* theCondProba)
 {
-register uint   i,
-                                n,
-                                t       ;
+uint   i, n, t ;
 
         for (n = 0 ; n < theNSample ; n++)
         {
@@ -72,13 +79,13 @@ void cDiscrete::ComputeDerivative(cDVector& theY, cDVector** theGrad, cDMatrix**
 uint myT = theY.GetSize() ;
 
 uint myNFreeProba = GetNProba() - 1 ;
-	for (register uint t = 0 ; t < myT ; t++)
+	for (uint t = 0 ; t < myT ; t++)
 	{	
 	uint myBegIndex = (mvNClass - 1) * (mvNClass + 1) ;
-		for (register uint i = 0 ; i < mvNClass ; i++)
+		for (uint i = 0 ; i < mvNClass ; i++)
 		{	theHess[i][t] = 0.0 ;
 			theGrad[i][t] = 0.0 ;
-			for (register uint j = 0 ; j < myNFreeProba ; j++)
+			for (uint j = 0 ; j < myNFreeProba ; j++)
 			{	if ( (uint)theY[t] == j)
 					theGrad[i][t][myBegIndex + j] = 1.0L ;
 				else
@@ -98,9 +105,9 @@ uint myNFreeProba = GetNProba() - 1 ;
 uint mySizeCour = theCov.GetNCols() ;
 cDVector myU(mySizeCour, 0.0) ;
 
-	for (register uint n = 0 ; n < mvNClass ; n++)
+	for (uint n = 0 ; n < mvNClass ; n++)
 	{
-		for (register uint i = myBegIndex ; i < myBegIndex + myNFreeProba ; i++)
+		for (uint i = myBegIndex ; i < myBegIndex + myNFreeProba ; i++)
 			myU[i] = -1.0 ;
 		theCov = AddOneVariable(theCov, myU) ;
 		mySizeCour++ ;
@@ -115,7 +122,7 @@ uint myNFreeProba = GetNProba() - 1 ;
 cDVector myNumDistrParam ;
 cDVector myNumProba(myNFreeProba) ;
 uint myIndCour = 0 ;
-	for (register uint j = 0 ; j < mvNClass ; j++)
+	for (uint j = 0 ; j < mvNClass ; j++)
 	{	GetSubVector(theNumDistrParam, myIndCour, myNFreeProba, myNumProba) ;
 		myNumDistrParam = cat(myNumDistrParam, myNumProba) ;
 		myNumDistrParam = cat(myNumDistrParam, (double)theNextInd) ;
@@ -160,7 +167,7 @@ void cDiscrete::UpdateParameters(cInParam& theInParam, cBaumWelch& theBaumWelch,
 
 void cDiscrete::InitParameters(cBaumWelchInParam& theInParam)
 {
-        register uint   i, t ;
+        uint   i, t ;
         uint myNProba = GetNProba() ;
 
 #ifdef _RDLL_
@@ -171,7 +178,7 @@ void cDiscrete::InitParameters(cBaumWelchInParam& theInParam)
         {
                 for (i = 0 ; i < mvNClass ; i++)
                 {
-                        register uint j;
+                        uint j;
                         double mySum = 0.0 ;
 
                         for(j = 0 ; j < myNProba ; j++)
@@ -227,7 +234,7 @@ void cDiscrete::SetParam(uint theDeb, cDVector& theParam)
                 for (uint n = 0 ; n < mvNClass ; n++)
                 {
                         mProbaMatVector[t][n][myNProba-1] = 1.0 ;
-                        for (register uint p = 0 ; p < myNProba - 1 ; p++)
+                        for (uint p = 0 ; p < myNProba - 1 ; p++)
                         {
                                 mProbaMatVector[t][n][p] = theParam[k++] ;
                                 mProbaMatVector[t][n][myNProba-1] -= mProbaMatVector[t][n][p] ;

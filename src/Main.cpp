@@ -55,14 +55,14 @@ cDVector myp1(2, mypD1), myp2(2, mypD2) ;
 cDVector myY = Zeros(2) ;
 cDVector** myGrad = new cDVector*[2] ;
 cDMatrix** myHess = new cDMatrix*[2] ;
-	for (register uint j = 0 ; j < 2 ; j++)
+	for (uint j = 0 ; j < 2 ; j++)
 	{	myGrad[j] = new cDVector[1] ;
 		myGrad[j][0].ReAlloc(25) ;
 		myHess[j] = new cDMatrix[1] ;
 		myHess[j][0].ReAlloc(25, 25) ;
 	}
 	myMixt.ComputeDerivative(myY, myGrad, myHess) ;
-	for (register uint j = 0 ; j < 2 ; j++)
+	for (uint j = 0 ; j < 2 ; j++)
 	{
 		cout << "Grad[" << j <<"] : " << endl << myGrad[j][0] << endl ;
 		cout << "Hess[" << j <<"] : " << endl << myHess[j][0] << endl ;
@@ -72,13 +72,13 @@ cDMatrix** myHess = new cDMatrix*[2] ;
 
 ifstream myFile ;
 cDVector* myRt = new cDVector[NB_SAMPLE] ;
-register uint n = 0 ;
+uint n = 0 ;
 uint myT[NB_SAMPLE] ;
 double myAux ;
 	myFile.open(FIC_NAME) ;
 	if ((int)NB_SAMPLE == 1)
 	{	while (myFile)
-		{	for (register int l = 0 ; l < DIM_OBS ; l++)
+		{	for (int l = 0 ; l < DIM_OBS ; l++)
 				myFile >> myAux ;		
 			n++ ;
 		}
@@ -90,7 +90,7 @@ double myAux ;
 	uint i, j = 1 ;
 		while (myFile)
 		{	myFile >> i ;
-			for (register uint l = 0 ; l < DIM_OBS ; l++)
+			for (uint l = 0 ; l < DIM_OBS ; l++)
 				myFile >> myAux ;
 			if (i == j)
 				n++ ;
@@ -112,12 +112,12 @@ double myMin = 1e+100, myMax=-1e+100 ;
 	if ((int)NB_SAMPLE == 1)
 		myRt[0].ReAlloc(DIM_OBS*n) ;
 	else
-		for (register uint j = 0 ; j < NB_SAMPLE ; j++)
+		for (uint j = 0 ; j < NB_SAMPLE ; j++)
 			myRt[j].ReAlloc(myT[j]*DIM_OBS) ;
 	std::fstream myFile1(FIC_NAME) ;
 	if ((int)NB_SAMPLE == 1)
-	{	for (register uint j = 0 ; j < n  ; j++)
-			for (register uint k = 0 ; k < DIM_OBS ; k++)
+	{	for (uint j = 0 ; j < n  ; j++)
+			for (uint k = 0 ; k < DIM_OBS ; k++)
 			{	myFile1 >> myRt[0][j + k*n]  ;
 				myMin = MIN(myMin, myRt[0][j + k*n]) ;
 				myMax = MAX(myMin, myRt[0][j + k*n]) ;
@@ -125,10 +125,10 @@ double myMin = 1e+100, myMax=-1e+100 ;
 	}
 	else
 	{	uint myAux1 ;
-		for (register uint i = 0 ; i < NB_SAMPLE ; i++)
-			for (register uint j = 0 ; j < myT[i]  ; j++)
+		for (uint i = 0 ; i < NB_SAMPLE ; i++)
+			for (uint j = 0 ; j < myT[i]  ; j++)
 			{	myFile1 >> myAux1 ;
-				for (register uint k = 0 ; k < DIM_OBS ; k++)
+				for (uint k = 0 ; k < DIM_OBS ; k++)
 					myFile1 >>  myRt[i][j + k*myT[i]]  ;
 			}
 	}
@@ -168,7 +168,7 @@ cViterbi myViterbi(myParam) ;
 
 cDMatrix* myProbaCond = new cDMatrix[NB_SAMPLE] ;
 
-	for (register uint q = 0 ; q < NB_SAMPLE ; q++)
+	for (uint q = 0 ; q < NB_SAMPLE ; q++)
 		myProbaCond[q].ReAlloc(NB_STATES, myT[q]) ;
 
 	myHMMFit.mDistrParam->ComputeCondProba(myRt, NB_SAMPLE, myProbaCond) ;
@@ -203,7 +203,7 @@ cDMatrix myCov = Inv(myInformation) ;
 
 
 cDVector myStdError(myNFreeParam) ;
-	for (register uint i = 0 ; i < myNFreeParam ; i++)
+	for (uint i = 0 ; i < myNFreeParam ; i++)
 		myStdError[i] = sqrt(myCov[i][i]) ;
 	cout << "Ecart-types : " << endl << myStdError << endl ;
 

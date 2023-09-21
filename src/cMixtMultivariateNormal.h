@@ -5,7 +5,7 @@
  ***                                                         
  *** Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr> 
  *** Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ***                                                         
+ ***  
  **************************************************************/
 
 #ifndef _CMIXTMULTIVARIATENORMAL_H_

@@ -5,7 +5,9 @@
  ***                                                         
  *** Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr> 
  *** Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ***                                                         
+ ***           
+ *** cDVector is a Vector implementation, which provides the vector structure,
+ *** vector-operators and vector util operations.                                        
  **************************************************************/
 
 #include "cDVector.h"
@@ -85,7 +87,7 @@ void cDVector::ReAlloc(uint theSize, double theVal)
 	{	Delete() ;
 		Initialize(theSize) ;
 	}
-	for (register uint i = 0 ; i < theSize ; i++)
+	for (uint i = 0 ; i < theSize ; i++)
 		mvV[i] = theVal ; 
 }
  
@@ -95,7 +97,7 @@ void cDVector::ReAlloc(uint theSize, double* theVect)
 	{	Delete() ;
 		Initialize(theSize) ;
 	}
-	for (register uint i = 0 ; i < theSize ; i++)
+	for (uint i = 0 ; i < theSize ; i++)
 		mvV[i] = theVect[i] ; 
 }
 
@@ -352,7 +354,7 @@ uint mySize = theVect1.GetSize() ;
 		throw cOTError("Wrong vector sizes in ScalarProduct") ;
 
 double myRes = 0.0 ;
-	for (register uint i = 0 ; i < mySize ; i++)
+	for (uint i = 0 ; i < mySize ; i++)
 		myRes += theVect1[i]*theVect2[i] ;
 	return myRes ;
 }
@@ -362,7 +364,7 @@ void GetSubVector(const cDVector& theSrcVector, uint theFirstIndex, uint theSize
 	if (theSrcVector.GetSize() < theSize + theFirstIndex)
 		throw cOTError("Wrong vector size in GetSubVector") ;
 	theDestVector.ReAlloc(theSize) ;
-	for (register uint i = 0 ; i < theSize ; i++)
+	for (uint i = 0 ; i < theSize ; i++)
 		theDestVector[i] = theSrcVector[i+theFirstIndex] ;
 }
 
@@ -372,7 +374,7 @@ uint mySize = theSrcVector.GetSize() ;
 	if (theFirstIndex + mySize > theDestVector.GetSize())
 		throw cOTError("Wrong vector size in SetSubVector") ;
 
-	for (register uint i = 0 ; i < mySize ; i++)
+	for (uint i = 0 ; i < mySize ; i++)
 		theDestVector[i+theFirstIndex] = theSrcVector[i] ;
 }
 

@@ -5,7 +5,9 @@
  ####                                                         
  #### Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr>
  #### Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ####                                                         
+ ####    
+ #### Contains additional RHmm internal functions regarding class structure
+ #### 
  ###############################################################
 
 setStorageMode <- function(object) UseMethod("setStorageMode")
@@ -109,6 +111,7 @@ setStorageMode.discreteClass <- function(object)
    return(x)
 }
 
+# Returns factor levels of observations obs
 GetAllLevels <- function(obs)
 {
     if (is.list(obs))
@@ -135,6 +138,13 @@ GetAllLevels <- function(obs)
     }
 }
 
+# Input:
+# paramHMM - List containing distribution type and factor levels, see TransfListe
+# obs - List or vector of observations
+# Returns list consisting of:
+# Zt - List of factor levels for discrete distributions, or list of observations for non-discrete distributions
+# nLevels - Number of factor levels of observations obs (for non discrete distribution = 0)
+# labels - Factor levels  (for non discrete distribution = NULL)
 TransformeListe <- function(paramHMM, obs)
 {
     if (paramHMM$dis=='DISCRETE')
@@ -170,6 +180,7 @@ TransformeListe <- function(paramHMM, obs)
     }
 }
 
+# Calls TransformeListe, takes as input a distribution and the observations
 TransfListe <- function(distribution, obs)
 {
     if (distribution$dis == 'DISCRETE')

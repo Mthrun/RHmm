@@ -17,14 +17,14 @@ cDVector myKmeans(theNClass) ;
 uint myT = theYt.mSize ;
 double myMoy = 0.0,
          myVar = 0.0 ;
-register uint t ;
+uint t ;
         for (t = 0 ; t < myT ; t++)
         {       myMoy = ((double)t * myMoy + theYt[t])/(double)(t+1) ;
                 myVar = ((double)t * myVar + theYt[t] * theYt[t])/((double)(t+1)) ;
         }
         myVar -= myMoy*myMoy ;
 
-        register uint k ;
+        uint k ;
 double mystdev = sqrt(myVar) ;
         for (k = 0 ; k < theNClass ; k++)
                 myKmeans[k] =  -2*mystdev + myMoy + 2*mystdev * unif_rand() ;
@@ -56,7 +56,7 @@ int myIter = 0 ;
                         }       
                 }
                 if (myNbChangement > 0)
-                {       register uint i ;
+                {       uint i ;
                         for (i = 0 ; i < theNClass ; i++)
                         {       myNbObs[i] = 0 ;
                                 myKmeans[i] = 0.0 ;
@@ -82,20 +82,20 @@ cDMatrix myKmeans(theNClass, theDimObs) ;
 cDVector       myMoy(theDimObs),
                         myVar(theDimObs) ;
 
-register uint   i,
+uint   i,
                                 t ;
         for (t = 0 ; t < myT ; t++)
                 for (i = 0 ; i < theDimObs ; i++)
                 {       myMoy[i] = ((double)t * myMoy[i] + theYt[t+myT*i])/(double)(t+1) ;
                         myVar[i] = ((double)t * myVar[i] + theYt[t+myT*i] * theYt[t+myT*i])/((double)(t+1)) ;
                 }
-        for(register uint i = 0 ; i < theDimObs ; i++)
+        for(uint i = 0 ; i < theDimObs ; i++)
                 myVar[i] -= myMoy[i]*myMoy[i] ;
 
 
-register uint k ;
+uint k ;
 cDVector myStDev(theDimObs)  ;
-        for (register uint i = 0 ; i < theDimObs ; i++)
+        for (uint i = 0 ; i < theDimObs ; i++)
                 myStDev[i] = sqrt(myVar[i]) ;
 
         for (k = 0 ; k < theNClass ; k++)

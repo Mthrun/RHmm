@@ -20,7 +20,6 @@
 
 #include "cOTError.h"
 #include "cDVector.h"
-#include "R_ext/Lapack.h"
 #ifndef D_PRECISION
         #define D_PRECISION 16
 #endif //D_PRECISION
@@ -104,8 +103,8 @@ extern cDMatrix Inv(cDMatrix& theMatrix) ;
 extern void GetSubMatrix(cDMatrix& theSrcMatrix, uint theSize, cDMatrix& theDestMatrix) ;
 extern void GetSubMatrix(cDMatrix& theSrcMatrix,  uint theNRow, uint theNCol, cDMatrix& theDestMatrix) ;
 extern void SetSubMatrix(cDMatrix& theSrcMatrix, uint theFirtRow, uint theFirstCol, cDMatrix& theDestMatrix) ;
-extern void LapackInvAndDet(cDMatrix& theMatrix, cDMatrix& theInvMatrix, double& theDet) ;
-extern double LapackDet(cDMatrix& theMatrix) ;
+extern void ArmadilloInvAndDet(cDMatrix& theMatrix, cDMatrix& theInvMatrix, double& theDet) ;
+extern double ArmadilloDet(cDMatrix& theMatrix) ;
 extern void AddColRow(const cDVector& theColRow, cDMatrix& theMat) ;
 
 #endif // CDMATRIX_H

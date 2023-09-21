@@ -5,10 +5,13 @@
  ***                                                         
  *** Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr> 
  *** Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ***                                                         
+ ***                  
+ *** cDMatrix is a Matrix implementation, which provides the matrix structure,
+ *** matrix-operators and matrix util operations for e.g. calculating the determinant or inverse matrix.                                       
  **************************************************************/
 
 #include "cDMatrix.h"
+#include <RcppArmadillo.h>
 
 void cDMatrix::Initialize(uint theNRow, uint theNCol)
 {       mvSize = theNRow*theNCol ;
@@ -275,14 +278,14 @@ uint n ;
 	if ( (n = theMat.GetNCols()) == 1 )
 	{	
 	cDVector myVect(n) ;
-		for ( register uint i = 0 ; i < n ; i++)
+		for ( uint i = 0 ; i < n ; i++)
 			myVect[i] = theMat[i][0] ;
 		return myVect ;
 	}
 	else
 	{	
 	cDVector myVect(n) ;
-		for ( register uint i = 0 ; i < n ; i++)
+		for ( uint i = 0 ; i < n ; i++)
 			myVect[i] = theMat[0][1] ;
 		return myVect ;
 	}
@@ -389,6 +392,11 @@ double mySum ;
     return myTmpVect ;
 }
 
+/*
+ * Overloading multiplication for matrix-vector multiplication
+ * @param theMat The input matrix
+ * @param theVect The input vector
+ */
 cDVector operator*(const cDMatrix& theMat, const cDVector& theVect)
 {
     return MatMult(theMat, theVect) ;
@@ -405,31 +413,46 @@ double AsDouble(const cDMatrix& theMat)
 	return theMat[0][0] ;
 }
 
+/*
+ * Creates a identity matrix, with diagonal values 1
+ * @param theN Number of columns/rows
+ * @return myTempMatrix The identity matrix
+ */
 cDMatrix Identity(uint theN)
 {
 cDMatrix myTempMatrix(theN, theN) ;
-        for (register uint i=0 ; i < theN ; i++)
+        for (uint i=0 ; i < theN ; i++)
                 myTempMatrix[i][i] = 1.0L ;
         return myTempMatrix ;
 }
 
+/*
+ * Creates a diagonal matrix, with the diagonal values of the input vector
+ * @param theVect The diagonal values as cDVector
+ * @return myTempMatrix The diagonal matrix
+ */
 cDMatrix Diag(cDVector& theVect)
 {
 uint mySize = theVect.GetSize() ;
 cDMatrix myTempMatrix(mySize, mySize) ;
-        for (register uint i = 0 ; i <mySize ; i++)
+        for (uint i = 0 ; i <mySize ; i++)
                 myTempMatrix[i][i] = theVect[i] ;
 
         return myTempMatrix ;
 }
 
+/*
+ * Calculates matrix inverse, using the Eigendecomposition
+ * @param theMatrix cDMatrix input matrix
+ * @return myTempMatrix The inverse matrix
+ */
 cDMatrix Inv(cDMatrix& theMatrix)
 {
 uint myNCol = theMatrix.GetNCols() ;
 cDMatrix myTempMatrix(myNCol, myNCol) ;
 double myDet ;
 
-        LapackInvAndDet(theMatrix, myTempMatrix, myDet) ;
+        ArmadilloInvAndDet(theMatrix, myTempMatrix, myDet) ;
         if (std::fabs(myDet) < MIN_DBLE)
                 throw cOTError("Non inversible matrix") ;
         return myTempMatrix ;
@@ -440,17 +463,31 @@ void GetSubMatrix(cDMatrix& theSrcMatrix, uint theSize, cDMatrix& theDestMatrix)
 	GetSubMatrix(theSrcMatrix, theSize, theSize, theDestMatrix) ;
 }
 
+/*
+ * Gets submatrix of an input matrix
+ * @param theSrcMatrix cDMatrix input matrix
+ * @param theNRow Number of rows used as subset matrix from the theSrcMatrix
+ * @param theNCol Number of cols used as subset matrix from the theSrcMatrix
+ * @param theDestMatrix The cDMatrix to be filled with the subset matrix
+ */
 void GetSubMatrix(cDMatrix& theSrcMatrix, uint theNRow, uint theNCol, cDMatrix& theDestMatrix)
 {
 	if ( (theNRow > theSrcMatrix.GetNRows()) || (theNCol > theSrcMatrix.GetNCols()) )
 		throw cOTError("Wrong matrix size in GetSubMatrix") ;
 	theDestMatrix.ReAlloc(theNRow, theNCol) ;
 	
-	for (register uint i = 0 ; i < theNRow ; i++)
-		for (register uint j = 0 ; j < theNCol ; j++)
+	for (uint i = 0 ; i < theNRow ; i++)
+		for (uint j = 0 ; j < theNCol ; j++)
 			theDestMatrix[i][j] = theSrcMatrix[i][j] ;
 }
 
+/*
+ * Sets submatrix in the input matrix
+ * @param theSrcMatrix cDMatrix input subset matrix
+ * @param theFirstRow First row of the subset matrix
+ * @param theFirstCol First col of the subset matrix
+ * @param theDestMatrix The cDMatrix in which the subset matrix is set
+ */
 void SetSubMatrix(cDMatrix& theSrcMatrix, uint theFirstRow, uint theFirstCol, cDMatrix& theDestMatrix)
 {
 uint myNRows = theSrcMatrix.GetNRows() ;
@@ -459,11 +496,16 @@ uint myNCols = theSrcMatrix.GetNCols() ;
 	if ( (theDestMatrix.GetNRows()  < myNRows + theFirstRow) || (theDestMatrix.GetNCols() < myNCols + theFirstCol) )
 		throw cOTError("Wrong matrix size in SetSubMatrix") ;
 
-	for (register uint i = 0 ; i < myNRows ; i++)
-		for (register uint j = 0 ; j < myNCols ; j++)
+	for (uint i = 0 ; i < myNRows ; i++)
+		for (uint j = 0 ; j < myNCols ; j++)
 			theDestMatrix[i+theFirstRow][j+theFirstCol] = theSrcMatrix[i][j] ;
 }
 
+/*
+ * Adds a row/col to a cDMatrix. The matrix is assumed to be symmetrical.
+ * @param theColRow The row/col to be added
+ * @param theMat The (symmetric) cDMatrix input matrix
+ */
 void AddColRow(const cDVector& theColRow, cDMatrix& theMat) 
 {
 uint myNRow = theMat.GetNRows() ;
@@ -474,82 +516,90 @@ uint mySize = theColRow.GetSize() ;
 cDMatrix mySrcMatrix = theMat ;
 	theMat.ReAlloc(mySize, mySize) ;
 	SetSubMatrix(mySrcMatrix, 0, 0, theMat) ;
-	for (register uint i = 0 ; i < mySize  ; i++)
+	for (uint i = 0 ; i < mySize  ; i++)
 		theMat[i][mySize-1] = theMat[mySize-1][i] = theColRow[i] ;
 }
 
-void LapackInvAndDet(cDMatrix& theMatrix, cDMatrix& theInvMatrix, double& theDet)
+/*
+ * Calculates the determinant of a matrix, as well as the inverse matrix using,
+ * the Eigendecomposition. NOTE: this version uses RcppArmadillo,
+ * since LAPACK calls, create problems with some FORTRAN compilers.
+ * @param theMatrix The cDMatrix input matrix, which should be symmetrical
+ * @param theInvMatrix cDMatrix to be filled with the values of the inverse matrix
+ * @param theDet reference to the determinant variable, to be filled in this method
+ */
+// [[Rcpp::depends(RcppArmadillo)]]
+void ArmadilloInvAndDet(cDMatrix& theMatrix, cDMatrix& theInvMatrix, double& theDet)
 {
 uint myNCol = theMatrix.GetNCols() ;
 
-double  *myAP = new double[myNCol*(myNCol + 1)/2],
-                *myW = new double[myNCol],
-                *myZ = new double[myNCol*myNCol],
-                *myWork = new double[myNCol * 3] ;
-int myInfo,
-        myN = (int)(myNCol),
-        myldz = (int)(myNCol) ;
+double *myAP = new double[myNCol*myNCol];
+int myN = (int)(myNCol), myldz = (int)(myNCol) ;
 
-        for (register int i = 0 ; i < myN ; i++)
-                for (register int j = i ; j < myldz ; j++)
-                        myAP[i+(j+1)*j/2]  = theMatrix[i][j] ;
+  arma::vec myW(myNCol);
+  arma::mat myZ(myNCol, myNCol);
 
-        F77_NAME(dspev)("V", "U", &myN, myAP, myW, myZ, &myldz, myWork, &myInfo) ;
+  int index = 0;
+  for (int i = 0 ; i < myN ; i++) {
+    for (int j = 0 ; j < myldz ; j++) {
+      myAP[index]  = theMatrix[i][j] ;
+      ++index;
+    }
+  }
 
-        if (myInfo != 0)
-                throw cOTError("Non inversible matrix") ;
-        theDet = 1.0L ;
-cDVector myInvEigenValue = cDVector(myNCol) ;
+  arma::mat myAPMatrix(myAP, (int)(myNCol), (int)(myNCol));
 
-cDMatrix myEigenVector(myNCol, myNCol) ;
-        for (register uint i = 0 ; i < myNCol ; i++)
-        {       theDet *= myW[i] ;
-                myInvEigenValue[i] = 1.0 /myW[i] ;
-                for (register int j = 0 ; j < myN ; j++)
-                        myEigenVector[i][j] = myZ[i + j*myN] ;
-        }
-        theInvMatrix =  myEigenVector ;
-cDMatrix myAuxMat1 = Diag(myInvEigenValue), myAuxMat2 = Transpose(myEigenVector) ;
-cDMatrix myAuxMat = myAuxMat1 * myAuxMat2 ;
-        theInvMatrix = theInvMatrix * myAuxMat ;
-        
-        delete[] myAP ;
-        delete[] myW ;
-        delete[] myZ ;
-        delete[] myWork ;
+  arma::eig_sym(myW, myZ, myAPMatrix);
+  
+  theDet = arma::prod(myW);
+
+  arma::mat myEigenVector = myZ;
+  arma::vec myInvEigenValue = 1.0 / myW;
+  arma::mat armaInvMat = myEigenVector * arma::diagmat(myInvEigenValue) * arma::trans(myEigenVector);
+  
+  int numRows = armaInvMat.n_rows;
+  int numCols = armaInvMat.n_cols;
+  for (int i = 0; i < numRows; ++i) {
+    for (int j = 0; j < numCols; ++j)
+      theInvMatrix[i][j] = armaInvMat(i,j);
+  }
+  
+  delete[] myAP;
 }
 
-double LapackDet(cDMatrix& theMatrix)
+
+/*
+ * Calculates the determinant of a matrix. NOTE: this version uses RcppArmadillo,
+ * since LAPACK calls, create problems with some FORTRAN compilers.
+ * @param theMatrix The cDMatrix, from which the determinant is calcuated
+ * @return The determinant
+ */
+// [[Rcpp::depends(RcppArmadillo)]]
+double ArmadilloDet(cDMatrix& theMatrix)
 {
-uint myNCol = theMatrix.GetNCols() ;
-
-double *myAP = new double[myNCol*(myNCol + 1)/2],
-       *myW = new double[myNCol],
-       *myZ = new double[myNCol*myNCol],
-       *myWork = new double[myNCol * 3] ;
-int myInfo,
-    myN = (int)(myNCol),
-    myldz = (int)(myNCol) ;
-
-	for (register int i = 0 ; i < myN ; i++)
-		for (register int j = i ; j < myldz ; j++)
-			myAP[i+(j+1)*j/2]  = theMatrix[i][j] ;
-
-    F77_NAME(dspev)("V", "U", &myN, myAP, myW, myZ, &myldz, myWork, &myInfo) ;
-
-double myDet ;
-	if (myInfo != 0)
-		myDet = 0.0 ;
-	else
-	{	myDet = 1.0L ;
-        for (register uint i = 0 ; i < myNCol ; i++)
-        {	myDet *= myW[i] ;
-        }
-	}        
-    delete[] myAP ;
-    delete[] myW ;
-    delete[] myZ ;
-    delete[] myWork ;
-
-	return myDet ;
+  uint myNCol = theMatrix.GetNCols() ;
+  
+  double *myAP = new double[myNCol*myNCol];
+  int myN = (int)(myNCol), myldz = (int)(myNCol) ;
+  
+  arma::vec myW(myNCol);
+  arma::mat myZ(myNCol, myNCol);
+  
+  int index = 0;
+  for (int i = 0 ; i < myN ; i++) {
+    for (int j = 0 ; j < myldz ; j++) {
+      myAP[index]  = theMatrix[i][j] ;
+      ++index;
+    }
+  }
+  
+  arma::mat myAPMatrix(myAP, (int)(myNCol), (int)(myNCol));
+  
+  arma::eig_sym(myW, myZ, myAPMatrix); // Eigenvalue decomposition
+  
+  double theDet = arma::prod(myW);      
+  
+  delete[] myAP;
+                                            
+  return theDet;
 }

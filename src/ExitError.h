@@ -13,6 +13,8 @@
 
 #include "cOTError.h"
 
+// use char const * ?
+
 inline void myAssert(bool theTest, char* theMess) {if (!theTest) throw cOTError(theMess) ; }
 
 #endif //_EXITERROR_H_

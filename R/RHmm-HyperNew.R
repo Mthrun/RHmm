@@ -5,11 +5,16 @@
  ####                                                         
  #### Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr>
  #### Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ####                                                         
+ ####        
+ #### Exported functions:
+ #### asymptoticCov               - Function calculates the empirical asymptotic covariance matrix of the HMM parameters
+ #### asymptoticIterSimCovMat     - Function computes the empirical asymptotic covariance matrix of the fitted HMM
+ #### computeScoreAndInformation  - Function calculates the score and the information matrix (Fisher-Information) 
+ ####                             of the independent parameters of the HMM, using Lystig and Hugues's algorithm
  ###############################################################
 
 tolMin <- .Machine$double.eps*100
-# Contraintes sur les paramètres
+# Contraintes sur les param?tres
 eProba <- 1
 eVar <- 2
 eCor <- 3
@@ -26,6 +31,8 @@ sumList <- function(List, n)
         Res <- List
     return(Res)
 }
+
+# --- Helper functions for parameters and constraints for different class types ---
 
 GetNParam<-function(object) UseMethod("GetNParam")
 GetNAllParam<-function(object) UseMethod("GetNAllParam")
@@ -800,11 +807,16 @@ GetNConstraint.discreteClass<-function(object)
     return(object$nStates)
 }
 
+
+# --- Helper functions for parameters and constraints for different class types END ---
+
+# Function calculates the score and the information matrix (Fisher-Information) of the 
+# independent parameters of the HMM, using Lystig and Hugues's algorithm
 computeScoreAndInformation <- function(HMM, obs)
 {
-    if ( ( class(HMM) != "HMMFitClass" ) && (class(HMM) != "HMMClass") )
+    if ((!inherits(HMM,"HMMFitClass") && !inherits(HMM,"HMMClass")))
         stop("class(HMM) must be 'HMMClass' or 'HMMFitClass'\n")
-    if (class(HMM) == "HMMFitClass")
+    if (inherits(HMM,"HMMFitClass"))
         HMM <- HMM$HMM
 
     if (is.data.frame(obs))
@@ -828,11 +840,12 @@ computeScoreAndInformation <- function(HMM, obs)
     return(list(score=score, information=information))
 }
 
+# Function calculates the empirical asymptotic covariance matrix of the HMM parameters
 asymptoticCov <- function(HMM, obs)
 {
-    if ( ( class(HMM) != "HMMFitClass" ) && (class(HMM) != "HMMClass") )
+    if ((!inherits(HMM,"HMMFitClass") && !inherits(HMM,"HMMClass")))
         stop("class(HMM) must be 'HMMClass' or 'HMMFitClass'\n")
-    if (class(HMM) == "HMMFitClass")
+    if (inherits(HMM,"HMMFitClass"))
         HMM <- HMM$HMM
 
     if (is.data.frame(obs))
@@ -851,12 +864,12 @@ asymptoticCov <- function(HMM, obs)
     return(Res)
 }
 
-
+# Function computes the empirical asymptotic covariance matrix of the fitted HMM
 asymptoticIterSimCovMat <- function(HMM, obs, nSimul, verbose=FALSE, oldCovMat=NULL)
 {
-    if ( ( class(HMM) != "HMMFitClass" ) && (class(HMM) != "HMMClass") )
+    if ((!inherits(HMM,"HMMFitClass") && !inherits(HMM,"HMMClass")))
         stop("class(HMM) must be 'HMMClass' or 'HMMFitClass'\n")
-    if (class(HMM) == "HMMFitClass")
+    if (inherits(HMM,"HMMFitClass"))
         HMM <- HMM$HMM
     nParam <- GetNAllParam(HMM)$nParam
     if (is.null(oldCovMat))
@@ -909,10 +922,10 @@ asymptoticIterSimCovMat <- function(HMM, obs, nSimul, verbose=FALSE, oldCovMat=N
 }
 
 
-
+# Set an aysmptomatic covariance matrix in an HMMFit object
 setAsymptoticCovMat<-function(HMMFit, asymptCovMat)
 {
-    if ( ( class(HMMFit) != "HMMFitClass" ) )
+    if (!inherits(HMMFit,"HMMFitClass"))
         stop("class(HMMFit) must be 'HMMFitClass'\n")
     if (! is_numeric_matrix(asymptCovMat) )
         stop("asymptCovMat must be a matrix\n")
@@ -1184,6 +1197,7 @@ NomsIndepParamHMM.HMMFitClass <- function(object)
     return(NomsIndepParamHMM(object$HMM))
 }
 
+# Overloading of summary function (summary(HMM))
 summary.HMMFitClass <-function (object, ...)
 {
     ans = NULL

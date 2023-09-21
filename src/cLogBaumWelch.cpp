@@ -5,7 +5,8 @@
  ***                                                         
  *** Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr> 
  *** Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ***                                                         
+ *** 
+ *** Class for Log-Baum-Welch-Algorithm (Alpha and Beta / forward and backward probs as log values)                                                         
  **************************************************************/
 
 #include "StdAfxRHmm.h"
@@ -34,13 +35,13 @@ cLogBaumWelch::cLogBaumWelch(uint theNSample, uint* theT, uint theNClass)
         mLogXsi = new cDMatrix*[mvNSample] ;
         mSumLogXsi = new cDMatrix[mvNSample] ;
         mLogRho = new cDVector[mvNSample] ;
-        for (register uint n = 0 ; n < mvNSample ; n++)
+        for (uint n = 0 ; n < mvNSample ; n++)
         {       mvT[n] = theT[n] ;
                 mLogAlpha[n].ReAlloc(theNClass, mvT[n]) ;
                 mLogBeta[n].ReAlloc(theNClass, mvT[n]) ;
                 mLogGamma[n].ReAlloc(theNClass, mvT[n]) ;
                 mLogXsi[n] = new cDMatrix[mvT[n]] ;
-                for (register uint t = 0 ; t < mvT[n] ; t++)
+                for (uint t = 0 ; t < mvT[n] ; t++)
                         mLogXsi[n][t].ReAlloc(theNClass, theNClass) ;
                 mSumLogXsi[n].ReAlloc(theNClass, theNClass) ;
                 mLogRho[n].ReAlloc(mvT[n]) ;
@@ -69,13 +70,13 @@ cLogBaumWelch::cLogBaumWelch(const cInParam &theInParam)
         mLogXsi = new cDMatrix*[mvNSample] ;
         mSumLogXsi = new cDMatrix[mvNSample] ;
         mLogRho = new cDVector[mvNSample] ;
-        for (register uint n = 0 ; n < mvNSample ; n++)
+        for (uint n = 0 ; n < mvNSample ; n++)
         {       mvT[n] = (theInParam.mY[n].mSize)/theInParam.mDimObs ;
                 mLogAlpha[n].ReAlloc(theInParam.mNClass, mvT[n]) ;
                 mLogBeta[n].ReAlloc(theInParam.mNClass, mvT[n]) ;
                 mLogGamma[n].ReAlloc(theInParam.mNClass, mvT[n]) ;
                 mLogXsi[n] = new cDMatrix[mvT[n]] ;
-                for (register uint t=0 ; t < mvT[n] ; t++)
+                for (uint t=0 ; t < mvT[n] ; t++)
                         mLogXsi[n][t].ReAlloc(theInParam.mNClass, theInParam.mNClass) ;
                 mSumLogXsi[n].ReAlloc(theInParam.mNClass, theInParam.mNClass) ;
                 mLogRho[n].ReAlloc(mvT[n]) ;
@@ -85,11 +86,11 @@ cLogBaumWelch::cLogBaumWelch(const cInParam &theInParam)
 cLogBaumWelch::~cLogBaumWelch()
 {       MESS_DESTR("cLogBaumWelch") 
         if (mvNSample > 0)
-        {       for (register uint n = 0 ; n < mvNSample ; n++)
+        {       for (uint n = 0 ; n < mvNSample ; n++)
                 {       mLogAlpha[n].Delete() ;
                         mLogBeta[n].Delete() ;
                         mLogGamma[n].Delete() ;
-                        for (register uint t = 0 ; t < mvT[n] ; t++)
+                        for (uint t = 0 ; t < mvT[n] ; t++)
                                 mLogXsi[n][t].Delete() ;
                         delete [] mLogXsi[n] ;
                         mSumLogXsi[n].Delete() ;
@@ -107,15 +108,15 @@ cLogBaumWelch::~cLogBaumWelch()
 
 void cLogBaumWelch::LogForwardBackward(cDMatrix* theCondProba, cHmm& theHMM)
 {
-register uint   i,
+uint   i,
                                 j               ;
-register int    t               ;
+int    t               ;
 double                  myLogAlpha,
                                 myAux,
                                 mySum   ;
 uint myNClass = theHMM.mInitProba.mSize ;
 
-        for (register uint n = 0 ; n < mvNSample ; n++)
+        for (uint n = 0 ; n < mvNSample ; n++)
         {
                 int myT = (int)mvT[n] ;
 

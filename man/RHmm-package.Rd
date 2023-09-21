@@ -9,23 +9,18 @@ Hidden Markov Models in R
 \description{
 Discrete, univariate or multivariate gaussian, mixture of
         univariate or multivariate gaussian HMM functions for
-        simulation and estimation. M. Thrun added the package into the dbt, because it is no longer availible on CRAN.
-				
+        simulation and estimation.
+
+RHmm package version 2.1.2 
+
+MCT&LB: updated C++ standard and fixed warnings there, changed namespace, added example and Sunspot dataset, RelDiffWithYesterday.R added, RHmm-package.RD added, updated to CRAN guidelines
+			
 RHmm package version 2.1.1 - August, 10th, 2016
-MT: added into dbt, changed namespace, description, Sunspot dataset added, RelDiffWithYesterday.R added, RHmm-package.RD added
 
 RHmm package version 2.1.0 - August, 6th, 2014: added from
 
 }
 \details{
-\tabular{ll}{
-Package: \tab RHmm\cr
-Type: \tab Package\cr
-Version: \tab 2.1.1\cr
-Date: \tab 2016-08-10\cr
-License: \tab GPL\cr
-}
-
 
 Thanks to:
 - Mait Raag who found a bug in may Multivariate Normal Density function (version <= 1.03).
@@ -40,7 +35,6 @@ Thanks to:
 \author{
 Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr> and Sebastian Bauer <mail@sebastianbauer.info>
 
-Maintainer: Michael Thrun <mthrun@informatik.uni-marburg.de>
 }
 \references{
 \url{http://r-forge.r-project.org/projects/rhmm/}
@@ -57,7 +51,7 @@ HMMmodell <- HMMFit(obs=RelDiffProzent, nStates=FestgesetzteClustAnz,
 control=list(verbose=1, init= 'KMEANS'),# K-means initialisierung
                      asymptCov=TRUE)
 ############################################################
-# analyse des Modells
+# analysis of the model
 HMMmodell
 summary(HMMmodell)
 
@@ -71,9 +65,9 @@ UebergangsmatrixProzent= round(Uebergangsmatrix*100)
 UebergangsmatrixProzent
 HMMmeans
 ########################################################################
-# viterbi Alg zur vorhersage der Zustaende
+# viterbi alg to predict the states
 VitPath <- viterbi(HMMmodell, RelDiffProzent)
-HMMcls <- VitPath$states # die vorhergesagten Klassen des HMM
+HMMcls <- VitPath$states # the predicted classes of the HMM
 
 }
 \keyword{RHmm}

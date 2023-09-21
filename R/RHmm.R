@@ -5,12 +5,23 @@
  ####                                                         
  #### Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr>
  #### Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ####                                                         
+ #### 
+ #### Exported functions:
+ #### distributionSet
+ #### HMMFit
+ #### HMMGraphicDiag
+ #### HMMPlotSerie
+ #### HMMSet
+ #### HMMSim
+ #### viterbi
+ #### forwardBackward
  ###############################################################
 
 tol <- .Machine$double.eps
 library(MASS)
 library(nlme)
+
+# -------------------------- Helper functions --------------------------
 
 min_eigen_value <- function(x)
 {
@@ -130,6 +141,12 @@ MakeLabels <- function(nStates, labels="State")
     }
     return(cNames)
 }
+
+# -------------------------- Helper functions END --------------------------
+
+# -------------------------- Distribution class definitions --------------------------
+# functions to create distribution class objects, for univariateNormal, multivariateNormal, 
+# discrete, univariateMixture and multivariateMixture distributions
 
 univariateNormalSet <- function(mean, var, verif=TRUE)
 {   if (verif)
@@ -327,122 +344,10 @@ multivariateMixtureSet <- function(mean, cov, proportion, verif = TRUE)
     return(Res)
 }
 
-#'
-#' Dispatches distribution
-#'
-distributionSet <- function(dis, ...)
-{
-# DEBUT de distributionSet
+# -------------------------- Distribution class definitions END --------------------------
 
-    if (is.na(match(dis, c('NORMAL', 'MIXTURE', 'DISCRETE'))))
-        stop("dis must be in 'NORMAL', 'MIXTURE', 'DISCRETE'\n")
-    args <- list(...)
-    mcall <- list(as.name("toto"))
-    extras <- match.call(expand.dots = FALSE)$... # pour recupererer les noms
-    lextras <- length(extras)
-    for (i in 1:lextras)
-    {   mcall <- c(mcall, args[i])
-        names(mcall[i+1]) <- names(extras[i])
-    }
 
-    if (dis=="NORMAL")
-    {   if ( (lextras == 2) || (lextras == 3) )
-        {   if (!any(sapply(args, is.list)))
-            {   mcall[[1]] <- as.name("univariateNormalSet")
-                nmcall <- names(mcall)
-                for (i in 1:length(nmcall))
-                    if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
-                        if ( !(nmcall[i] %in% c("mean", "var", "verif")) )
-                        {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
-                            stop(mess)
-                        }
-            }
-            else
-            {   mcall[[1]] <- as.name("multivariateNormalSet")
-                nmcall <- names(mcall)
-                for (i in 1:length(nmcall))
-                    if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
-                        if ( !(nmcall[i] %in% c("mean", "cov", "verif")) )
-                        {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
-                            stop(mess)
-                        }
-            }
-            value <- (eval(as.call(mcall)))
-            if (is.character(value))
-                stop(value)
-            else
-                return(value)
-        }
-        else
-            stop("Wrong number of parameters.\n")
-    }
-
-    if (dis == "MIXTURE")
-    {   if ( (lextras == 3) || (lextras == 4) )
-        {   if (any(sapply(args, is_list_list)))
-            {   mcall[[1]] <- as.name("multivariateMixtureSet")
-                nmcall <- names(mcall)
-                 for (i in 1:length(nmcall))
-                    if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
-                        if (! (nmcall[i] %in% c("mean", "cov", "proportion", "verif")))
-                        {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
-                            stop(mess)
-                        }
-                value <- (eval(as.call(mcall)))
-                if (is.character(value))
-                    stop(value)
-                else
-                    return(value)
-           }
-            else
-            {   mcall[[1]] <- as.name("univariateMixtureSet")
-                nmcall <- names(mcall)
-                for (i in 1:length(nmcall))
-                    if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
-                        if (! (nmcall[i] %in% c("mean", "var", "proportion", "verif")))
-                        {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
-                            stop(mess)
-                        }
-                value <- (eval(as.call(mcall)))
-                if (is.character(value))
-                    stop(value)
-                else
-                    return(value)
-            }
-        }
-        else
-            stop("wrong number of parameters.\n")
-    }
-
-    if (dis == "DISCRETE")
-    {
-        if  ( (lextras == 1) || (lextras == 2) || (lextras == 3) )
-        {
-            mcall[[1]] <- as.name("discreteSet")
-            nmcall <- names(mcall)
-
-            for (i in 1:length(nmcall))
-            {
-                if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
-                {
-                    if (! (nmcall[i] %in% c("proba", "labels", "verif")))
-                    {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
-                        stop(mess)
-                    }
-                }
-            }
-            value <- eval(as.call(mcall))
-            if (is.character(value))
-            {    stop(value)
-            }
-            else
-            {    return(value)
-            }
-         }
-        else
-            stop("wrong number of parameters.\n")
-    }
-}
+# -------------------------- Overloading print function for distribution class objects --------------------------
 
 print.univariateNormalClass <- function(x, ...)
 {
@@ -547,6 +452,134 @@ print.distributionClass <- function(x, ...)
     NextMethod("print", x)
 }
 
+# -------------------------- Overloading print function for distribution class objects END --------------------------
+
+
+# -------------------------- Object creation functions --------------------------
+
+
+# Function is used to create a distributionClass object which contains the parameters of the distribution of the observations
+# for each hidden state. Since distributions can be univariate or multivariate, discrete or continuous,
+# the different values of a distributionClass object depend of the nature of the distribution.
+# returns distributionSet object
+distributionSet <- function(dis, ...)
+{
+  # DEBUT de distributionSet
+  
+  if (is.na(match(dis, c('NORMAL', 'MIXTURE', 'DISCRETE'))))
+    stop("dis must be in 'NORMAL', 'MIXTURE', 'DISCRETE'\n")
+  args <- list(...)
+  mcall <- list(as.name("toto"))
+  extras <- match.call(expand.dots = FALSE)$... # pour recupererer les noms
+  lextras <- length(extras)
+  for (i in 1:lextras)
+  {   mcall <- c(mcall, args[i])
+  names(mcall[i+1]) <- names(extras[i])
+  }
+  
+  if (dis=="NORMAL")
+  {   if ( (lextras == 2) || (lextras == 3) )
+  {   if (!any(sapply(args, is.list)))
+  {   mcall[[1]] <- as.name("univariateNormalSet")
+  nmcall <- names(mcall)
+  for (i in 1:length(nmcall))
+    if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
+      if ( !(nmcall[i] %in% c("mean", "var", "verif")) )
+      {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
+      stop(mess)
+      }
+  }
+    else
+    {   mcall[[1]] <- as.name("multivariateNormalSet")
+    nmcall <- names(mcall)
+    for (i in 1:length(nmcall))
+      if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
+        if ( !(nmcall[i] %in% c("mean", "cov", "verif")) )
+        {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
+        stop(mess)
+        }
+    }
+    value <- (eval(as.call(mcall)))
+    if (is.character(value))
+      stop(value)
+    else
+      return(value)
+  }
+    else
+      stop("Wrong number of parameters.\n")
+  }
+  
+  if (dis == "MIXTURE")
+  {   if ( (lextras == 3) || (lextras == 4) )
+  {   if (any(sapply(args, is_list_list)))
+  {   mcall[[1]] <- as.name("multivariateMixtureSet")
+  nmcall <- names(mcall)
+  for (i in 1:length(nmcall))
+    if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
+      if (! (nmcall[i] %in% c("mean", "cov", "proportion", "verif")))
+      {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
+      stop(mess)
+      }
+  value <- (eval(as.call(mcall)))
+  if (is.character(value))
+    stop(value)
+  else
+    return(value)
+  }
+    else
+    {   mcall[[1]] <- as.name("univariateMixtureSet")
+    nmcall <- names(mcall)
+    for (i in 1:length(nmcall))
+      if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
+        if (! (nmcall[i] %in% c("mean", "var", "proportion", "verif")))
+        {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
+        stop(mess)
+        }
+    value <- (eval(as.call(mcall)))
+    if (is.character(value))
+      stop(value)
+    else
+      return(value)
+    }
+  }
+    else
+      stop("wrong number of parameters.\n")
+  }
+  
+  if (dis == "DISCRETE")
+  {
+    if  ( (lextras == 1) || (lextras == 2) || (lextras == 3) )
+    {
+      mcall[[1]] <- as.name("discreteSet")
+      nmcall <- names(mcall)
+      
+      for (i in 1:length(nmcall))
+      {
+        if ( (!is.null(nmcall[i])) && (nmcall[i] !='') )
+        {
+          if (! (nmcall[i] %in% c("proba", "labels", "verif")))
+          {   mess <- sprintf("'%s' parameter unknown", nmcall[i])
+          stop(mess)
+          }
+        }
+      }
+      value <- eval(as.call(mcall))
+      if (is.character(value))
+      {    stop(value)
+      }
+      else
+      {    return(value)
+      }
+    }
+    else
+      stop("wrong number of parameters.\n")
+  }
+}
+
+
+# Function is used to create a HMMClass object which contains the parameters of the HMM. 
+# An HMM is described by an initial state probability vector, transition matrices and a distributionClass object.
+# returns HMMClass object
 HMMSet <- function(initProb, transMat, ...)
 {
     args <- list(...)
@@ -609,6 +642,11 @@ HMMSet <- function(initProb, transMat, ...)
     return(Res)
 }
 
+# -------------------------- Object creation functions END --------------------------
+
+
+
+# -------------------------- Overloading print functions for HMM objects --------------------------
 
 print.HMMClass <- function(x, ...)
 {   y <- x$distribution
@@ -681,6 +719,66 @@ print.HMMClass <- function(x, ...)
     cat("\nConditionnal distribution parameters:\n", sep="")
     print(x$distribution, quote=FALSE, right=TRUE, doNotAffiche=TRUE)
 }
+
+print.HMMFitClass <- function(x, ...)
+{
+  # Call and Model:
+  cat("\nCall:", sep="\n")
+  cat("----", sep="\n")
+  cat(deparse(x$call), "\n", sep = "")
+  y <- x$HMM$distribution
+  if (y$dis == "NORMAL")
+  {    if (y$dimObs==1)
+    nomloi <- "univariate gaussian"
+  else
+    nomloi <- sprintf("%d-d gaussian", y$dimObs)
+  }
+  if (y$dis == "DISCRETE")
+    nomloi <- "discrete"
+  if (y$dis == "MIXTURE")
+  {   if (y$dimObs == 1)
+    nomloi <- sprintf("mixture of %d gaussian", y$nMixt)
+  else
+    nomloi <- sprintf("mixture of %d %d-d gaussian", y$nMixt, y$dimObs)
+  }
+  
+  Model <- sprintf("%d states HMM with %s distribution", y$nStates, nomloi)
+  
+  cat("\nModel:", sep="\n")
+  cat("------", sep="\n")
+  cat(Model, "\n", sep = "")
+  # Algorithm
+  
+  cat("\nBaum-Welch algorithm status:", sep="\n")
+  cat("----------------------------", sep="\n")
+  if (! x$convergence)
+    cat(sprintf("\nNO CONVERGENCE AFTER %d ITERATIONS\n", x$nIter), sep="")
+  else
+    cat(sprintf("Number of iterations : %d\n", x$nIter), sep="")
+  if (is.nan(x$relVariation))
+    cat(sprintf("\nPROBLEM IN BAUM-WELCH'S ALGORITHM\n"), sep="")
+  else
+    cat(sprintf("Last relative variation of LLH function: %f\n", x$relVariation), sep="")
+  
+  # Estimation
+  if (x$convergence)
+  {    cat("\nEstimation:", sep="\n")
+    cat("-----------", sep="\n")
+  }
+  else
+  {    cat("\nLast Estimation:", sep="\n")
+    cat("----------------", sep="\n")
+  }
+  print(x$HMM, doNotAffiche=TRUE)
+  cat("\nLog-likelihood: ",format(round(x$LLH, 2)), "\n", sep="")
+  cat("BIC criterium: ",format(round(x$BIC, 2)), "\n", sep="")
+  cat("AIC criterium: ",format(round(x$AIC, 2)), "\n", sep="")
+}
+
+# -------------------------- Overloading print functions for HMM objects END --------------------------
+
+
+# -------------------------- HMM simulation functions (for various distribution types) --------------------------
 
 sim <- function(object, nSim, lastState=NULL) UseMethod("sim")
 
@@ -900,23 +998,29 @@ sim.HMMClass <- function(object, nSim, lastState)
 
 }
 
+# Simulation of an HMM for different classes of observations distributions
 HMMSim <- function(nSim, HMM, lastState=NULL)
 {
     if (nSim %% 1 != 0)
         stop("nSim must be a positive integer\n")
     if (nSim < 0)
         stop('nSim must be a positive integer')
-    if (class(HMM) != "HMMClass")
+    if (!inherits(HMM,"HMMClass"))
         stop("HMM be be a HMMClass object. See HMMSet")
 
     return(sim(HMM, nSim, lastState))
 }
 
+# -------------------------- HMM simulation functions END --------------------------
+
+
 incr <- function(x)
 {
     x<-x+1
-
 }
+
+
+# -------------------------- Algorithmic functions --------------------------
 
 HMMKMeans <- function(obs, nClass)
 {   if (is.data.frame(obs))
@@ -996,6 +1100,9 @@ HMMKMeans <- function(obs, nClass)
     return(Res)
 }
 
+# Baum-Welch algorithm, which is a special case of the expectation–maximization algorithm 
+# used to find the unknown parameters of a HMM, which uses the forward-Backward algorithm.
+# Returns an HMMFitClass object
 BaumWelch<-function(paramHMM, obs, paramAlgo)
 {
     paramAlgo1 <-paramAlgo[1:7]
@@ -1059,6 +1166,8 @@ BaumWelch<-function(paramHMM, obs, paramAlgo)
     return(Res)
 }
 
+# Function returns an HMMFitClass object which contains the results of the 
+# Baum-Welch algorithm for the user's data
 HMMFit <- function(obs, dis="NORMAL", nStates = 2, asymptCov=FALSE, ... )
 {
     if (is.data.frame(obs))
@@ -1164,7 +1273,7 @@ HMMFit <- function(obs, dis="NORMAL", nStates = 2, asymptCov=FALSE, ... )
         {   control <- args[[1]]
             nnames <- names(extras[[1]])
             if ( !is.null(nnames) )
-                if ( (nnames != '') && (nnames != 'control') )
+                if ( any((nnames == '')) && any((nnames == 'control')) )        # (nnames != '') && (nnames != 'control')
                 {   nerror <- sprintf("unknown '%s' parameter.\n", nnames)
                     stop(nerror)
                 }
@@ -1227,7 +1336,7 @@ HMMFit <- function(obs, dis="NORMAL", nStates = 2, asymptCov=FALSE, ... )
     }
 
     if (!is.null(control$initPoint))
-    {    if (class(control$initPoint) != "HMMClass")
+    {    if (!inherits(control$initPoint,"HMMClass"))
             stop("control$initPoint class must be HMMClass. See HMMSet\n")
          control$init <- "USER"
          initPoint <- control$initPoint
@@ -1307,65 +1416,12 @@ HMMFit <- function(obs, dis="NORMAL", nStates = 2, asymptCov=FALSE, ... )
     return(Res)
 }
 
-print.HMMFitClass <- function(x, ...)
-{
-   # Call and Model:
-    cat("\nCall:", sep="\n")
-    cat("----", sep="\n")
-    cat(deparse(x$call), "\n", sep = "")
-    y <- x$HMM$distribution
-    if (y$dis == "NORMAL")
-    {    if (y$dimObs==1)
-            nomloi <- "univariate gaussian"
-        else
-            nomloi <- sprintf("%d-d gaussian", y$dimObs)
-    }
-    if (y$dis == "DISCRETE")
-        nomloi <- "discrete"
-    if (y$dis == "MIXTURE")
-    {   if (y$dimObs == 1)
-            nomloi <- sprintf("mixture of %d gaussian", y$nMixt)
-        else
-            nomloi <- sprintf("mixture of %d %d-d gaussian", y$nMixt, y$dimObs)
-    }
 
-    Model <- sprintf("%d states HMM with %s distribution", y$nStates, nomloi)
-
-    cat("\nModel:", sep="\n")
-    cat("------", sep="\n")
-    cat(Model, "\n", sep = "")
-    # Algorithm
-
-    cat("\nBaum-Welch algorithm status:", sep="\n")
-    cat("----------------------------", sep="\n")
-    if (! x$convergence)
-        cat(sprintf("\nNO CONVERGENCE AFTER %d ITERATIONS\n", x$nIter), sep="")
-    else
-        cat(sprintf("Number of iterations : %d\n", x$nIter), sep="")
-    if (is.nan(x$relVariation))
-        cat(sprintf("\nPROBLEM IN BAUM-WELCH'S ALGORITHM\n"), sep="")
-    else
-        cat(sprintf("Last relative variation of LLH function: %f\n", x$relVariation), sep="")
-
-   # Estimation
-   if (x$convergence)
-   {    cat("\nEstimation:", sep="\n")
-        cat("-----------", sep="\n")
-   }
-   else
-   {    cat("\nLast Estimation:", sep="\n")
-        cat("----------------", sep="\n")
-   }
-   print(x$HMM, doNotAffiche=TRUE)
-   cat("\nLog-likelihood: ",format(round(x$LLH, 2)), "\n", sep="")
-   cat("BIC criterium: ",format(round(x$BIC, 2)), "\n", sep="")
-   cat("AIC criterium: ",format(round(x$AIC, 2)), "\n", sep="")
-}
-
+# The forward-backward function is used to compute quantities used in the Baum-Welch algorithm
 forwardBackward<-function(HMM, obs, logData = TRUE)
-{   if ( ( class(HMM) != "HMMFitClass" ) && (class(HMM) != "HMMClass") )
+{   if ( (!inherits(HMM,"HMMFitClass")) && (!inherits(HMM,"HMMClass")) )
         stop("class(HMM) must be 'HMMClass' or 'HMMFitClass'\n")
-    if (class(HMM) == "HMMFitClass")
+    if (inherits(HMM,"HMMFitClass"))
         HMM <- HMM$HMM
 
     if (length(obs) < 1) stop("'obs' needs to contain at least a single element!")
@@ -1425,6 +1481,7 @@ forwardBackward<-function(HMM, obs, logData = TRUE)
     return(Res1)
 }
 
+# Alternative call for forwardBackward function
 forwardbackward<-function(HMM, obs, logData=TRUE)
 {
     return(forwardBackward(HMM, obs, logData))
@@ -1441,14 +1498,14 @@ inc <- function(x)
     return(x)
 }
 
-
+# Function calculates the optimal hidden states sequence using Viterbi's algorithm
 viterbi<-function(HMM, obs)
-{   if ( ( class(HMM) != "HMMFitClass" ) && (class(HMM) != "HMMClass") )
+{   if ( (!inherits(HMM,"HMMFitClass")) && (!inherits(HMM,"HMMClass")) )
         stop("class(HMM) must be 'HMMClass' or 'HMMFitClass'\n")
 
     if (length(obs) < 1) stop("'obs' needs to contain at least a single element!")
 
-    if (class(HMM) == "HMMFitClass")
+    if (inherits(HMM,"HMMFitClass"))
         HMM <- HMM$HMM
 
     if (is.data.frame(obs))
@@ -1528,6 +1585,13 @@ myDoCall <- function(fun, arg, defaultDotArg, dotArg)
     }
     do.call(fun, c(arg, defaultDotArg))
 }
+
+
+# -------------------------- Algorithmic functions END --------------------------
+
+
+
+# -------------------------- Graphic diagnostic functions for HMM --------------------------
 
 GraphicDiag <- function(object, vit, obs, color = "green", ...) UseMethod("GraphicDiag")
 
@@ -1703,9 +1767,9 @@ GraphicDiag.discreteClass <- function(object, vit, obs, color = "green") {
 }
 
 HMMGraphicDiag <- function(vit, HMM, obs, color = "green") {
-    if (class(vit) != "viterbiClass")
+    if (!inherits(vit,"viterbiClass"))
         stop("vit must be a viterbiClass object. See viterbi\n")
-    if ((class(HMM) != "HMMClass") && (class(HMM) != "HMMFitClass") && is.na(match("distributionClass",
+    if ((!inherits(HMM,"HMMClass")) && (!inherits(HMM,"HMMFitClass")) && is.na(match("distributionClass",
         class(HMM))))
         stop("distribution must be a distributionClass, HMMClass or a HMMFitClass object\n")
 
@@ -1719,6 +1783,10 @@ HMMGraphicDiag <- function(vit, HMM, obs, color = "green") {
 
 }
 
+# -------------------------- Graphic diagnostic functions for HMM END --------------------------
+
+
+# -------------------------- Plot time series functions for HMM --------------------------
 
 PlotSerie <- function(object, vit, obs, color="black", ...) UseMethod("PlotSerie")
 PlotSerie.default <- function(object, vit, obs, color="black", ...)
@@ -1750,11 +1818,12 @@ plotSerie.distributionClass <- function(object, vit, obs, color="black", ...)
 }
 
 
+# Function plots the time series in each hidden state
 HMMPlotSerie <- function(obs, states, dates = NULL, dis = "NORMAL", color="green", oneFig=FALSE, ...)
 {
-    if ( (class(states) !="viterbiClass") && (!is_numeric_vector(states)) && (!is_list_numeric_vector(states)))
+    if ( (!inherits(states,"viterbiClass")) && (!is_numeric_vector(states)) && (!is_list_numeric_vector(states)))
         stop("states must be a viterbiClass object, a numeric vector or a list of numeric vector.\n")
-    if (class(states) == "viterbiClass")
+    if (inherits(states,"viterbiClass"))
         states <- states$states
 
     if (is.data.frame(obs))
@@ -1897,3 +1966,7 @@ HMMPlotSerie <- function(obs, states, dates = NULL, dis = "NORMAL", color="green
         }
     }
 }
+
+
+# -------------------------- Plot time series functions for HMM END --------------------------
+

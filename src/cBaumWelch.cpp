@@ -5,7 +5,8 @@
  ***                                                         
  *** Author: Ollivier TARAMASCO <Ollivier.Taramasco@imag.fr> 
  *** Author: Sebastian BAUER <sebastian.bauer@charite.de>
- ***                                                         
+ *** 
+ *** Class for Baum-Welch-Algorithm                                                        
  **************************************************************/
 
 #include "StdAfxRHmm.h"
@@ -34,14 +35,14 @@ cBaumWelch::cBaumWelch(uint theNSample, uint* theT, uint theNClass)
         mXsi = new cDMatrix*[mtNSample] ;
         mSumXsi = new cDMatrix[mtNSample] ;
         mRho = new cDVector[mtNSample] ;
-        for (register uint n = 0 ; n < mtNSample ; n++)
+        for (uint n = 0 ; n < mtNSample ; n++)
         {       mtT[n] = theT[n] ;
                 mAlpha[n].ReAlloc(theNClass, mtT[n]) ;
                 mDelta[n].ReAlloc(theNClass, mtT[n]) ;
                 mBeta[n].ReAlloc(theNClass, mtT[n]) ;
                 mGamma[n].ReAlloc(theNClass, mtT[n]) ;
                 mXsi[n] = new cDMatrix[mtT[n]] ;
-                for (register uint t = 0 ; t < mtT[n] ; t++)
+                for (uint t = 0 ; t < mtT[n] ; t++)
                         mXsi[n][t].ReAlloc(theNClass, theNClass) ;
                 mSumXsi[n].ReAlloc(theNClass, theNClass) ;
                 mRho[n].ReAlloc(mtT[n]) ;
@@ -72,14 +73,14 @@ cBaumWelch::cBaumWelch(const cInParam &theInParam)
         mXsi = new cDMatrix*[mtNSample] ;
         mSumXsi = new cDMatrix[mtNSample] ;
         mRho = new cDVector[mtNSample] ;
-        for (register uint n = 0 ; n < mtNSample ; n++)
+        for (uint n = 0 ; n < mtNSample ; n++)
         {       mtT[n] = (theInParam.mY[n].mSize)/theInParam.mDimObs ;
                 mAlpha[n].ReAlloc(theInParam.mNClass, mtT[n]) ;
                 mDelta[n].ReAlloc(theInParam.mNClass, mtT[n]) ;
                 mBeta[n].ReAlloc(theInParam.mNClass, mtT[n]) ;
                 mGamma[n].ReAlloc(theInParam.mNClass, mtT[n]) ;
                 mXsi[n] = new cDMatrix[mtT[n]] ;
-                for (register uint t=0 ; t < mtT[n] ; t++)
+                for (uint t=0 ; t < mtT[n] ; t++)
                         mXsi[n][t].ReAlloc(theInParam.mNClass, theInParam.mNClass) ;
                 mSumXsi[n].ReAlloc(theInParam.mNClass, theInParam.mNClass) ;
                 mRho[n].ReAlloc(mtT[n]) ;
@@ -89,12 +90,12 @@ cBaumWelch::cBaumWelch(const cInParam &theInParam)
 cBaumWelch::~cBaumWelch()
 {       MESS_DESTR("cBaumWelch") 
         if (mtNSample > 0)
-        {       for (register uint n = 0 ; n < mtNSample ; n++)
+        {       for (uint n = 0 ; n < mtNSample ; n++)
                 {       mAlpha[n].Delete() ;
                         mDelta[n].Delete() ;
                         mBeta[n].Delete() ;
                         mGamma[n].Delete() ;
-                        for (register uint t = 0 ; t < mtT[n] ; t++)
+                        for (uint t = 0 ; t < mtT[n] ; t++)
                                 mXsi[n][t].Delete() ;
                         delete [] mXsi[n] ;
                         mSumXsi[n].Delete() ;
@@ -113,12 +114,12 @@ cBaumWelch::~cBaumWelch()
 
 void cBaumWelch::ForwardBackward(cDMatrix* theCondProba, cHmm& theHMM)
 {
-register uint i,j ;
-register int t ;
+uint i,j ;
+int t ;
 double myAux, mySum   ;
 uint myNClass = theHMM.mInitProba.mSize ;
 double myLLH  ; 
-        for (register uint n = 0 ; n < mtNSample ; n++)
+        for (uint n = 0 ; n < mtNSample ; n++)
         {
         int myT = (int)mtT[n] ;
                 mRho[n][0] = 0.0 ;
@@ -194,27 +195,27 @@ void cBaumWelch::OutForwardBackward(cDMatrix* theCondProba, cHmm& theHMM, bool t
 uint myNClass = theHMM.mInitProba.mSize ;
         
 // Compute "true" log(Rho), log(Alpha), log(Beta) or "true" Rho, Alpha, Beta
-        for (register uint n = 0 ; n < mtNSample ; n++)
+        for (uint n = 0 ; n < mtNSample ; n++)
         {
         int myT = (int)mtT[n] ;
                 
                 if (theLogData)
                 {       
                 double myLogRho = 0.0 ;
-                        for (register uint i = 0 ; i < myNClass ; i++)
+                        for (uint i = 0 ; i < myNClass ; i++)
                                 mBeta[n][i][myT-1] = 0.0 ;
                 
-                        for (register int t = myT - 2 ; t >= 0 ; t--)
+                        for (int t = myT - 2 ; t >= 0 ; t--)
                         {       myLogRho += log(mRho[n][t]) ;
-                                for (register uint i = 0 ; i < myNClass ; i++)
+                                for (uint i = 0 ; i < myNClass ; i++)
                                         mBeta[n][i][t] = log(mBeta[n][i][t]) + myLogRho ;
                         }
                         
                         myLogRho = 0.0 ;
-                        for (register int t = 0 ; t < myT ; t++)
+                        for (int t = 0 ; t < myT ; t++)
                         {       myLogRho += log(mRho[n][t]) ;
                                 mRho[n][t] = myLogRho ;
-                                for (register uint i = 0 ; i < myNClass ; i++)
+                                for (uint i = 0 ; i < myNClass ; i++)
                                         mAlpha[n][i][t] = log(mAlpha[n][i][t]) + myLogRho ;
                         }
                 }
@@ -222,17 +223,17 @@ uint myNClass = theHMM.mInitProba.mSize ;
                 {       
                 double myNewRho = 1.0 ;
                         
-                        for (register int t = myT - 2 ; t >= 0 ; t--)
+                        for (int t = myT - 2 ; t >= 0 ; t--)
                         {       myNewRho *= mRho[n][t] ;
-                                for (register uint i = 0 ; i < myNClass ; i++)
+                                for (uint i = 0 ; i < myNClass ; i++)
                                         mBeta[n][i][t] *= myNewRho ;
                         }
 
                         myNewRho = 1.0 ;
-                        for (register int t = 0 ; t < myT ; t++)
+                        for (int t = 0 ; t < myT ; t++)
                         {       myNewRho *= mRho[n][t] ;
                                 mRho[n][t] = myNewRho ;
-                                for (register uint i = 0 ; i < myNClass ; i++)
+                                for (uint i = 0 ; i < myNClass ; i++)
                                         mAlpha[n][i][t] *= myNewRho ;
                         }
                 }
