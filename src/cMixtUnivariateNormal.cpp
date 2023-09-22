@@ -212,7 +212,9 @@ uint s = 0 ;
         for (uint n = 0 ; n < theInParam.mNSample ; n++)
                 for (uint t = 0 ; t < theInParam.mY[n].mSize  ; t++)
                         {       myMoy = ((double)s*myMoy + theInParam.mY[n][t])/(double)(s+1) ;
-                                myVar = ((double)s*myVar + theInParam.mY[n][t]*theInParam.mY[n][t])/(double)(++s) ;
+                                s++;
+                                myVar = ((double)s*myVar + theInParam.mY[n][t]*theInParam.mY[n][t])/(double)(s) ;
+                                //myVar = ((double)s*myVar + theInParam.mY[n][t]*theInParam.mY[n][t])/(double)(++s) ;
                         }
         myVar -= myMoy*myMoy ;
         mystdev = sqrt(myVar) ;

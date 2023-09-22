@@ -1,5 +1,7 @@
 RHmm package version 2.1.2 - Septemper, 21th, 2023
 
+M. Thrun maintains the package in order to use it in his lectures. Due to CRAN guidelines he has to have the "cre" attributed although he did not create the package.
+
 News
 ----
 

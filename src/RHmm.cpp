@@ -42,11 +42,12 @@ char *myString = (char *)myStr ;
         {       if (strcmp(myString, "DISCRETE") == 0)
                         myDistrType = eDiscreteDistr ;
                 else
-                {       if (strcmp(myString, "MIXTURE") == 0)
+                {       if (strcmp(myString, "MIXTURE") == 0) {
                                 if (myDimObs==1)
                                         myDistrType = eMixtUniNormalDistr ;
                                 else
                                         myDistrType = eMixtMultiNormalDistr ;
+                        }
                 }
         }
 
@@ -140,6 +141,9 @@ cHmmFit myParamSortie = cHmmFit(myParamEntree) ;
                                         warning("Variable discrete emission probabilities not supported yet for BaumWelch algorithm.");
                         }
                         break ;
+                        default: {
+                          warning("Unkown distribution type.");
+                        }
                 }
                 myParamSortie.CopyHmm(myHMM) ;
         }
@@ -605,10 +609,13 @@ cHmm myHMM = cHmm(myDistrType, myNbClasses, myDimObs, myNbMixt, myNbProba) ;
 
 cDMatrix* myProbaCond = new cDMatrix[myNbSample] ;
 
-        for (uint n = 0 ; n < myNbSample ; n++)
-                myProbaCond[n].ReAlloc(myNbClasses, myT[n]) ;
+        for (uint n = 0 ; n < myNbSample ; n++) 
+        {
+          myProbaCond[n].ReAlloc(myNbClasses, myT[n]) ;
+          
+        }
 
-                myHMM.mDistrParam->ComputeCondProba(myY, myNbSample, myProbaCond) ;
+        myHMM.mDistrParam->ComputeCondProba(myY, myNbSample, myProbaCond) ;
 
 cLogBaumWelch myLogBaumWelch=cLogBaumWelch(myNbSample, myT, myNbClasses) ;
         myLogBaumWelch.LogForwardBackward(myProbaCond, myHMM) ;

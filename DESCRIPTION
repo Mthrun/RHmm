@@ -3,11 +3,12 @@ Type: Package
 Version: 2.1.2
 Date: 2023-09-21
 Title: Hidden Markov Models simulations and estimations
-Authors@R: c(person("Olliver", "Taramasco",role=c("cre","aut","cph")), person("Sebstian", "Bauer",role=c("ctb","rev")), person("Luca", "Brinkmann",role=c("ctb")),person("Michael", "Thrun", email= "m.thrun@gmx.net",role=c("ctb")))
+Authors@R: c(person("Olliver", "Taramasco",role=c("aut","cph")), person("Sebstian", "Bauer",role=c("ctb","rev")), person("Luca", "Brinkmann",role=c("ctb")),person("Michael", "Thrun", email= "m.thrun@gmx.net",role=c("ctb","cre")))
+Maintainer: Michael Thrun <m.thrun@gmx.net>
 Depends: R (>= 2.10.0)
 Imports: MASS, nlme
 LinkingTo: Rcpp, RcppArmadillo
-Description: Discrete, univariate or multivariate gaussian, mixture of univariate or multivariate gaussian HMM functions for simulation and estimation. M. Thrun added the package into the dbt, because it is no longer availible on CRAN.
+Description: Discrete, univariate or multivariate gaussian, mixture of univariate or multivariate gaussian HMM functions for simulation and estimation. M. Thrun maintains the package in order to use it in his lectures. Due to CRAN guidelines he has to have the "cre" attributed although he did not create the package.
 License: GPL (>= 2)
 URL: http://www.r-project.org,
         http://r-forge.r-project.org/projects/rhmm/

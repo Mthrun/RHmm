@@ -15,6 +15,8 @@
 #include "Hmm.h"
 #include "cInParam.h"
 #include "cCyclicVector.h"
+//#include "cDMatrix.h"
+
 
 class cDistribution ;
 class cHmm
